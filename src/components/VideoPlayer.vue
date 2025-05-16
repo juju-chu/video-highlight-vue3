@@ -55,7 +55,9 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, watch, nextTick, onMounted, onUnmounted, defineOptions } from 'vue'
+import { ref, watch, nextTick, onMounted, onUnmounted, defineOptions, computed } from 'vue'
+import { useTranscriptStore } from '../store'
+import { storeToRefs } from 'pinia'
 
 // refs
 const videoRef = ref<HTMLVideoElement | null>(null)
@@ -64,7 +66,14 @@ const videoUrl = ref<string>('')
 const fileName = ref<string>('')
 const videoKey = ref<number>(0) // 用來強制重新渲染 video 元素
 const currentTime = ref<number>(0)
-const highlightSegments = ref<{ start: number; end: number; text: string; highlight: boolean }[]>([])
+
+const store = useTranscriptStore()
+const { transcript } = storeToRefs(store)
+
+// 計算所有被選中的片段
+const highlightSegments = computed(() => {
+  return transcript.value.filter(item => item.highlight)
+})
 
 // 跳轉到指定時間
 const seekTo = (time: number) => {
@@ -89,7 +98,6 @@ defineExpose({
   seekTo
 })
 
-const transcript = ref<{ start: number; end: number; text: string }[]>([])
 const currentOverlay = ref<{ start: number; end: number; text: string } | null>(null)
 
 let animationFrameId: number
@@ -98,43 +106,39 @@ let animationFrameId: number
 async function onFileChange(e: Event) {
   const input = e.target as HTMLInputElement
   const file = input.files?.[0]
+  
   if (file) {
-    // 清理舊的 URL
-    if (videoUrl.value.startsWith('blob:')) {
-      URL.revokeObjectURL(videoUrl.value)
+    try {
+      // 檢查檔案類型
+      if (!file.type.startsWith('video/')) {
+        throw new Error('請上傳影片檔案')
+      }
+      
+      // 創建新的 URL
+      videoUrl.value = URL.createObjectURL(file)
+      // 設定檔案名稱
+      fileName.value = file.name
+      
+      // 重置 input
+      const fileInput = input
+      if (fileInput) {
+        fileInput.value = '';
+      }
+      // 強制重新渲染 video 元素
+      videoKey.value++
+      
+      // 載入字幕並取得 highlight 片段
+      const res = await fetch(`${import.meta.env.BASE_URL}mock/transcript.json`)
+      const data = await res.json()
+      store.setTranscript(data)
+      
+      // 發出文件選擇事件
+      emit('fileSelected', file)
+    } catch (error) {
+      console.error('❌ 影片無法播放，請確認格式或重新上傳')
     }
-    // 創建新的 URL
-    videoUrl.value = URL.createObjectURL(file)
-    // 設定檔案名稱
-    fileName.value = file.name
-    // 重置 input 值，這樣下次上傳相同檔案也會觸發 change 事件
-    if (fileInput.value) {
-      fileInput.value.value = '';
-    }
-    // 強制重新渲染 video 元素
-    videoKey.value++
-    
-    // 載入字幕並取得 highlight 片段
-    const res = await fetch(`${import.meta.env.BASE_URL}mock/transcript.json`)
-    const data = await res.json()
-    highlightSegments.value = data.filter(item => item.highlight)
-    
-    // 發出文件選擇事件
-    emit('fileSelected', file)
   }
 }
-
-// 載入 transcript JSON
-onMounted(async () => {
-  try {
-    const response = await fetch(`${import.meta.env.BASE_URL}mock/transcript.json`)
-    if (!response.ok) throw new Error('Failed to fetch transcript.json')
-    transcript.value = await response.json()
-    console.log('✅ Transcript loaded', transcript.value)
-  } catch (error) {
-    console.error('❌ Error loading transcript:', error)
-  }
-})
 
 // 字幕即時更新
 function updateSubtitle() {
@@ -203,6 +207,28 @@ onUnmounted(() => {
     URL.revokeObjectURL(videoUrl.value)
   }
 })
+
+watch(transcript, () => {
+  // 當 transcript 更新時，重新檢查當前時間是否在 highlight 片段內
+  if (videoRef.value) {
+    const time = videoRef.value.currentTime
+    const isInHighlight = highlightSegments.value.some(
+      (segment) => time >= segment.start && time <= segment.end
+    )
+    
+    if (!isInHighlight) {
+      const nextSegment = highlightSegments.value.find(
+        (segment) => segment.start > time
+      )
+      
+      if (nextSegment) {
+        videoRef.value.currentTime = nextSegment.start
+      } else {
+        videoRef.value.currentTime = videoRef.value.duration
+      }
+    }
+  }
+}, { deep: true })
 </script>
 
 <style scoped>

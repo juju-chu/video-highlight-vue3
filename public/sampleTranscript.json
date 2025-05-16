@@ -1,53 +1,72 @@
 [
   {
+    "id": 1,
     "start": 0,
     "end": 3,
-    "text": "嗨，這是一個demo影片"
+    "text": "嗨，這是一個demo影片",
+    "highlight": false
   },
   {
+    "id": 2,
     "start": 4,
     "end": 5,
-    "text": "你現在看到的是"
+    "text": "你現在看到的是",
+    "highlight": false
   },
   {
-    "start": 5,
+    "id": 3,
+    "start": 6,
     "end": 9,
-    "text": "一個海上面有很多島嶼"
+    "text": "一個海上面有很多島嶼",
+    "highlight": true
   },
   {
+    "id": 4,
     "start": 9,
     "end": 12,
-    "text": "然後再來也是一片海"
+    "text": "然後再來也是一片海",
+    "highlight": false
   },
   {
+    "id": 5,
     "start": 12,
     "end": 16,
-    "text": "然後還會看到一個湖有很多山"
+    "text": "然後還會看到一個湖有很多山",
+    "highlight": true
   },
   {
+    "id": 6,
     "start": 16,
     "end": 18,
-    "text": "然後接著呢會看到海洋"
+    "text": "然後接著呢會看到海洋",
+    "highlight": false
   },
   {
-    "start": 18,
+    "id": 7,
+    "start": 19,
     "end": 22,
-    "text": "海洋看起來很漂亮"
+    "text": "海洋看起來很漂亮",
+    "highlight": true
   },
   {
+    "id": 8,
     "start": 22,
     "end": 27,
-    "text": "然後再來下一個畫面看起來是一個港口"
+    "text": "然後再來下一個畫面看起來是一個港口",
+    "highlight": false
   },
   {
+    "id": 9,
     "start": 27,
-    "end": 30,
-    "text": "有一些船隻停在港口"
+    "end": 29.5,
+    "text": "有一些船隻停在港口",
+    "highlight": true
   },
   {
+    "id": 10,
     "start": 30,
     "end": 32,
-    "text": "demo結束"
+    "text": "demo結束",
+    "highlight": false
   }
 ]
-

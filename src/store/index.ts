@@ -28,4 +28,5 @@ export interface TranscriptItem {
   end: number;
   text: string;
   section: string;
+  highlight: boolean;
 }
