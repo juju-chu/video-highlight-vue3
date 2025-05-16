@@ -8,12 +8,24 @@
       Preview
     </h2>
     <!-- 上傳影片 -->
-    <input
-      type="file"
-      accept="video/*"
-      @change="onFileChange"
-      class="mb-2"
-    />
+    <div class="flex flex-col gap-2">
+      <input
+        ref="fileInput"
+        type="file"
+        accept="video/*"
+        @change="onFileChange"
+        class="hidden"
+      />
+      <button
+        @click="$refs.fileInput?.click()"
+        class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors w-fit"
+      >
+        選擇影片
+      </button>
+      <div v-if="fileName" class="text-sm text-gray-300">
+        已選擇檔案：{{ fileName }}
+      </div>
+    </div>
 
     <!-- 影片與字幕區塊 -->
     <div
@@ -22,12 +34,11 @@
       <!-- 播放影片 -->
       <video
         v-if="videoUrl"
+        :key="videoKey"
         ref="videoRef"
         class="w-full max-h-[400px] rounded"
         controls
         playsinline
-        @error="onVideoError"
-        @loadeddata="onVideoLoaded"
       >
         <source :src="videoUrl" type="video/mp4" />
         Your browser does not support the video tag.
@@ -49,7 +60,10 @@ import { ref, watch, nextTick, onMounted, onUnmounted } from 'vue'
 
 // refs
 const videoRef = ref<HTMLVideoElement | null>(null)
-const videoUrl = ref<string>('/video-highlight-vue3/sample.mp4')
+const fileInput = ref<HTMLInputElement | null>(null)
+const videoUrl = ref<string>('')
+const fileName = ref<string>('')
+const videoKey = ref<number>(0) // 用來強制重新渲染 video 元素
 
 const transcript = ref<{ start: number; end: number; text: string }[]>([])
 const currentOverlay = ref<{ start: number; end: number; text: string } | null>(null)
@@ -58,9 +72,23 @@ let animationFrameId: number
 
 // 上傳影片並取得 URL
 function onFileChange(e: Event) {
-  const file = (e.target as HTMLInputElement).files?.[0]
+  const input = e.target as HTMLInputElement
+  const file = input.files?.[0]
   if (file) {
+    // 清理舊的 URL
+    if (videoUrl.value.startsWith('blob:')) {
+      URL.revokeObjectURL(videoUrl.value)
+    }
+    // 創建新的 URL
     videoUrl.value = URL.createObjectURL(file)
+    // 設定檔案名稱
+    fileName.value = file.name
+    // 重置 input 值，這樣下次上傳相同檔案也會觸發 change 事件
+    if (fileInput.value) {
+      fileInput.value.value = '';
+    }
+    // 強制重新渲染 video 元素
+    videoKey.value++
   }
 }
 
@@ -93,9 +121,14 @@ watch(videoUrl, async (newUrl) => {
   if (!newUrl) return
   await nextTick()
   if (videoRef.value) {
-    console.log('🎬 Video loaded, starting subtitle tracking...')
-    cancelAnimationFrame(animationFrameId) // reset old loop
-    animationFrameId = requestAnimationFrame(updateSubtitle)
+    // 重新綁定事件監聽器
+    videoRef.value.addEventListener('error', onVideoError)
+    videoRef.value.addEventListener('loadeddata', () => {
+      console.log('✅ 影片成功載入')
+      console.log('🎬 開始追蹤字幕...')
+      cancelAnimationFrame(animationFrameId) // reset old loop
+      animationFrameId = requestAnimationFrame(updateSubtitle)
+    })
   }
 })
 
@@ -104,13 +137,12 @@ function onVideoError() {
   console.error('❌ 影片無法播放，請確認格式或重新上傳')
 }
 
-function onVideoLoaded() {
-  console.log('✅ 影片成功載入')
-}
-
-// 清除動畫 frame
+// 清除動畫 frame 和 URL
 onUnmounted(() => {
   cancelAnimationFrame(animationFrameId)
+  if (videoUrl.value.startsWith('blob:')) {
+    URL.revokeObjectURL(videoUrl.value)
+  }
 })
 </script>
 
