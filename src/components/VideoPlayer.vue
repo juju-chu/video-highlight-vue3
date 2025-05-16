@@ -181,6 +181,9 @@ watch(videoUrl, async (newUrl) => {
           
           if (nextSegment) {
             videoRef.value.currentTime = nextSegment.start
+          } else {
+            // 如果沒有下一個 highlight 片段，跳到影片結尾
+            videoRef.value.currentTime = videoRef.value.duration
           }
         }
       }
