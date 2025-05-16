@@ -64,6 +64,7 @@ const videoUrl = ref<string>('')
 const fileName = ref<string>('')
 const videoKey = ref<number>(0) // 用來強制重新渲染 video 元素
 const currentTime = ref<number>(0)
+const highlightSegments = ref<{ start: number; end: number; text: string; highlight: boolean }[]>([])
 
 // 跳轉到指定時間
 const seekTo = (time: number) => {
@@ -94,7 +95,7 @@ const currentOverlay = ref<{ start: number; end: number; text: string } | null>(
 let animationFrameId: number
 
 // 上傳影片並取得 URL
-function onFileChange(e: Event) {
+async function onFileChange(e: Event) {
   const input = e.target as HTMLInputElement
   const file = input.files?.[0]
   if (file) {
@@ -112,6 +113,12 @@ function onFileChange(e: Event) {
     }
     // 強制重新渲染 video 元素
     videoKey.value++
+    
+    // 載入字幕並取得 highlight 片段
+    const res = await fetch(`${import.meta.env.BASE_URL}mock/transcript.json`)
+    const data = await res.json()
+    highlightSegments.value = data.filter(item => item.highlight)
+    
     // 發出文件選擇事件
     emit('fileSelected', file)
   }
@@ -158,7 +165,24 @@ watch(videoUrl, async (newUrl) => {
     // 監聽時間更新
     videoRef.value.addEventListener('timeupdate', () => {
       if (videoRef.value) {
-        currentTime.value = videoRef.value.currentTime
+        const time = videoRef.value.currentTime
+        currentTime.value = time
+        
+        // 檢查當前時間是否在任何 highlight 片段內
+        const isInHighlight = highlightSegments.value.some(
+          (segment) => time >= segment.start && time <= segment.end
+        )
+        
+        // 如果不在 highlight 片段內，找下一個 highlight 片段
+        if (!isInHighlight) {
+          const nextSegment = highlightSegments.value.find(
+            (segment) => segment.start > time
+          )
+          
+          if (nextSegment) {
+            videoRef.value.currentTime = nextSegment.start
+          }
+        }
       }
     })
   }
