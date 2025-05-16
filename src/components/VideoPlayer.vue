@@ -63,6 +63,7 @@ const fileInput = ref<HTMLInputElement | null>(null)
 const videoUrl = ref<string>('')
 const fileName = ref<string>('')
 const videoKey = ref<number>(0) // 用來強制重新渲染 video 元素
+const currentTime = ref<number>(0)
 
 // 跳轉到指定時間
 const seekTo = (time: number) => {
@@ -74,6 +75,13 @@ const seekTo = (time: number) => {
 
 defineOptions({
   name: 'VideoPlayer'
+})
+
+const emit = defineEmits(['timeupdate', 'fileSelected'])
+
+// 監聽 currentTime 的變化
+watch(currentTime, (newTime) => {
+  emit('timeupdate', newTime)
 })
 
 defineExpose({
@@ -104,6 +112,8 @@ function onFileChange(e: Event) {
     }
     // 強制重新渲染 video 元素
     videoKey.value++
+    // 發出文件選擇事件
+    emit('fileSelected', file)
   }
 }
 
@@ -143,6 +153,13 @@ watch(videoUrl, async (newUrl) => {
       console.log('🎬 開始追蹤字幕...')
       cancelAnimationFrame(animationFrameId) // reset old loop
       animationFrameId = requestAnimationFrame(updateSubtitle)
+    })
+    
+    // 監聽時間更新
+    videoRef.value.addEventListener('timeupdate', () => {
+      if (videoRef.value) {
+        currentTime.value = videoRef.value.currentTime
+      }
     })
   }
 })

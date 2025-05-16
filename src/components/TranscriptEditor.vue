@@ -19,7 +19,10 @@
       </div>
       <div
         class="cursor-pointer"
-        :class="selectedIds.has(item.id) ? 'bg-blue-100' : ''"
+        :class="{
+          'bg-blue-100': selectedIds.has(item.id),
+          'bg-yellow-200': props.currentTime >= item.start && props.currentTime <= item.end
+        }"
         @click="handleItemClick(item)"
       >
         {{ item.text }}
@@ -29,13 +32,17 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, defineOptions, defineEmits } from 'vue'
+import { onMounted, defineOptions, defineEmits, defineProps, computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useTranscriptStore } from '../store'
 
 defineOptions({
   name: 'TranscriptEditor'
 })
+
+const props = defineProps<{
+  currentTime: number
+}>()
 
 const emit = defineEmits(['seek'])
 
@@ -49,9 +56,14 @@ const handleItemClick = (item: any) => {
   emit('seek', item.start)
 }
 
-onMounted(async () => {
+// 載入字幕檔案
+const loadTranscript = async () => {
   const res = await fetch(`${import.meta.env.BASE_URL}mock/transcript.json`)
   const data = await res.json()
   setTranscript(data)
+}
+
+defineExpose({
+  loadTranscript
 })
 </script>
