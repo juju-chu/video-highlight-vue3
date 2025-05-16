@@ -12,7 +12,7 @@
     "highlight": false
   },
   {
-    "start": 5,
+    "start": 6,
     "end": 9,
     "text": "一個海上面有很多島嶼",
     "highlight": true
@@ -36,7 +36,7 @@
     "highlight": false
   },
   {
-    "start": 18,
+    "start": 19,
     "end": 22,
     "text": "海洋看起來很漂亮",
     "highlight": true
@@ -49,7 +49,7 @@
   },
   {
     "start": 27,
-    "end": 30,
+    "end": 29.5,
     "text": "有一些船隻停在港口",
     "highlight": true
   },

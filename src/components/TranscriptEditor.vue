@@ -20,8 +20,8 @@
       <div
         class="cursor-pointer"
         :class="{
-          'bg-blue-100': selectedIds.has(item.id),
-          'bg-yellow-200': props.currentTime >= item.start && props.currentTime <= item.end
+          'bg-green-50': item.highlight && !(props.currentTime >= item.start && props.currentTime <= item.end),
+          'bg-green-200': item.highlight && (props.currentTime >= item.start && props.currentTime <= item.end)
         }"
         @click="handleItemClick(item)"
       >
