@@ -7,26 +7,6 @@
     >
       Preview
     </h2>
-    <!-- 上傳影片 -->
-    <div class="flex flex-col gap-2">
-      <input
-        ref="fileInput"
-        type="file"
-        accept="video/*"
-        @change="onFileChange"
-        class="hidden"
-      />
-      <button
-        @click="$refs.fileInput?.click()"
-        class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors w-fit"
-      >
-        選擇影片
-      </button>
-      <div v-if="fileName" class="text-sm text-gray-300">
-        已選擇檔案：{{ fileName }}
-      </div>
-    </div>
-
     <!-- 影片與字幕區塊 -->
     <div
       class="relative w-full max-h-[400px]"
@@ -52,11 +32,30 @@
         {{ currentOverlay.text }}
       </div>
     </div>
+    <!-- 上傳影片 -->
+    <div class="flex flex-col gap-2">
+      <input
+        ref="fileInput"
+        type="file"
+        accept="video/*"
+        @change="onFileChange"
+        class="hidden"
+      />
+      <button
+        @click="$refs.fileInput?.click()"
+        class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors w-fit"
+      >
+        選擇影片
+      </button>
+      <div v-if="fileName" class="text-sm text-gray-300">
+        已選擇檔案：{{ fileName }}
+      </div>
+    </div>
   </div>
 </template>
 
 <script lang="ts" setup>
-import { ref, watch, nextTick, onMounted, onUnmounted } from 'vue'
+import { ref, watch, nextTick, onMounted, onUnmounted, defineOptions } from 'vue'
 
 // refs
 const videoRef = ref<HTMLVideoElement | null>(null)
@@ -64,6 +63,22 @@ const fileInput = ref<HTMLInputElement | null>(null)
 const videoUrl = ref<string>('')
 const fileName = ref<string>('')
 const videoKey = ref<number>(0) // 用來強制重新渲染 video 元素
+
+// 跳轉到指定時間
+const seekTo = (time: number) => {
+  if (videoRef.value) {
+    videoRef.value.currentTime = time
+    videoRef.value.play()
+  }
+}
+
+defineOptions({
+  name: 'VideoPlayer'
+})
+
+defineExpose({
+  seekTo
+})
 
 const transcript = ref<{ start: number; end: number; text: string }[]>([])
 const currentOverlay = ref<{ start: number; end: number; text: string } | null>(null)

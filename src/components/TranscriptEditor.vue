@@ -20,7 +20,7 @@
       <div
         class="cursor-pointer"
         :class="selectedIds.has(item.id) ? 'bg-blue-100' : ''"
-        @click="toggleSelect(item.id)"
+        @click="handleItemClick(item)"
       >
         {{ item.text }}
       </div>
@@ -29,16 +29,25 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, defineComponent } from 'vue'
+import { onMounted, defineOptions, defineEmits } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useTranscriptStore } from '../store'
 
-defineComponent({
+defineOptions({
   name: 'TranscriptEditor'
 })
+
+const emit = defineEmits(['seek'])
+
 const store = useTranscriptStore()
 const { transcript, selectedIds } = storeToRefs(store)
 const { toggleSelect, setTranscript } = store
+
+// 當點擊文字時，發送 seek 事件並帶上開始時間
+const handleItemClick = (item: any) => {
+  toggleSelect(item.id)
+  emit('seek', item.start)
+}
 
 onMounted(async () => {
   const res = await fetch(`${import.meta.env.BASE_URL}mock/transcript.json`)
