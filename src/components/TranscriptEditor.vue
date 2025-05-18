@@ -28,7 +28,7 @@
         }"
       >
         <div
-          class="text-sm font-bold"
+          class="text-sm font-bold whitespace-nowrap"
           :class="{
             'cursor-not-allowed text-[#2b67ec]': !item.highlight,
             'cursor-pointer text-white hover:text-gray-700': item.highlight
@@ -38,7 +38,7 @@
           {{ formatTime(item.start) }} {{ item.section }}
         </div>
         <div
-          class="cursor-pointer"
+          class="cursor-pointer flex-1"
           @click="handleTextClick(item)"
         >
           {{ item.text }}
