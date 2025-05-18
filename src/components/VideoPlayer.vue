@@ -1,6 +1,6 @@
 <template>
   <div
-    class="flex flex-col gap-4 h-screen bg-gray-800 p-4 text-white"
+    class="flex flex-col gap-4 h-full bg-gray-800 p-4 text-white"
   >
     <h2
       class="text-xl font-bold mb-4 p-2 rounded w-full"
@@ -9,25 +9,20 @@
     </h2>
     <!-- 影片與字幕區塊 -->
     <div
-      class="relative w-full max-h-[400px]"
+      class="relative aspect-video bg-black mb-2 sm:mb-4 rounded overflow-hidden"
     >
-      <!-- 播放影片 -->
       <video
-        v-if="videoUrl"
-        :key="videoKey"
         ref="videoRef"
-        class="w-full max-h-[400px] rounded"
-        controls
-        playsinline
-      >
-        <source :src="videoUrl" type="video/mp4" />
-        Your browser does not support the video tag.
-      </video>
+        :key="videoKey"
+        :src="videoUrl"
+        class="w-full h-full"
+        @error="onVideoError"
+      />
 
-      <!-- 字幕疊字 -->
+      <!-- 字幕顯示 -->
       <div
         v-if="currentOverlay"
-        class="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-60 text-white text-lg px-4 py-2 rounded max-w-[90%] text-center"
+        class="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-gray-800 bg-opacity-30 text-white p-2 rounded text-sm sm:text-base"
       >
         {{ currentOverlay.text }}
       </div>
@@ -36,11 +31,11 @@
     <!-- 控制列 -->
     <div
       v-if="videoRef"
-      class="flex flex-col gap-2"
+      class="flex flex-col gap-1 sm:gap-2"
     >
       <!-- 播放控制按鈕 -->
       <div
-        class="flex items-center justify-center gap-4"
+        class="flex items-center justify-center gap-2 sm:gap-4"
       >
         <button
           class="p-2 text-white hover:text-[#3c82f6] transition-colors"
@@ -156,24 +151,24 @@
 
     <!-- 上傳影片 -->
     <div
-      class="flex flex-col gap-2"
+      class="flex flex-col gap-1 sm:gap-2 mt-2 sm:mt-4"
     >
       <input
         ref="fileInput"
         type="file"
         accept="video/*"
-        @change="onFileChange"
         class="hidden"
+        @change="onFileChange"
       />
       <button
-        @click="$refs.fileInput?.click()"
-        class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors w-fit"
+        class="bg-[#3c82f6] text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded text-sm sm:text-base hover:bg-[#2563eb] transition-colors"
+        @click="fileInput?.click()"
       >
         選擇影片
       </button>
       <div
         v-if="fileName"
-        class="text-sm text-gray-300"
+        class="text-xs sm:text-sm text-gray-300"
       >
         已選擇檔案：{{ fileName }}
       </div>
@@ -222,9 +217,14 @@ function formatTime(seconds: number): string {
 
 // 切換播放/暫停
 const togglePlay = () => {
-  if (!videoRef.value) return
+  if (!videoRef.value || highlightSegments.value.length === 0) return
   
   if (videoRef.value.paused) {
+    // 如果當前時間在最後一個片段的結尾，則回到第一個片段的開頭
+    const lastSegmentEnd = highlightSegments.value[highlightSegments.value.length - 1].end
+    if (Math.abs(videoRef.value.currentTime - lastSegmentEnd) < 0.1) {
+      videoRef.value.currentTime = highlightSegments.value[0].start
+    }
     videoRef.value.play()
     isPlaying.value = true
   } else {

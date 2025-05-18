@@ -1,34 +1,35 @@
 <template>
   <div
-    class="p-4 bg-gray-100"
+    class="min-h-full p-2 sm:p-4 bg-gray-100"
   >
     <h2
-      class="text-xl font-bold mb-4"
+      class="text-base sm:text-xl font-bold mb-4 sticky top-0 bg-gray-100 py-2 z-10"
     >
       Transcript
     </h2>
     <div
       v-for="(item, index) in transcript"
       :key="item.id"
-      class="mb-2"
+      class="mb-1 sm:mb-2"
     >
       <!-- 只在 title 第一次出現時顯示 -->
       <div
         v-if="index === 0 || item.title !== transcript[index - 1].title"
-        class="text-lg font-semibold text-gray-700 mb-1"
+        class="text-base sm:text-lg font-semibold text-gray-700 mb-1"
       >
         {{ item.title }}
       </div>
       <div
-        class="flex gap-2 items-center p-2 rounded"
+        class="flex flex-col sm:flex-row gap-1 sm:gap-2 p-2 rounded text-sm sm:text-base"
         :class="{
           'bg-white': !item.highlight,
           'bg-[#3c82f6] text-white': item.highlight,
           'border-2 border-[#facc14]': item.highlight && (props.currentTime >= item.start && props.currentTime <= item.end)
         }"
+        :data-time="item.start"
       >
         <div
-          class="text-sm font-bold whitespace-nowrap"
+          class="font-bold whitespace-nowrap text-xs sm:text-sm"
           :class="{
             'cursor-not-allowed text-[#2b67ec]': !item.highlight,
             'cursor-pointer text-white hover:text-gray-700': item.highlight
@@ -49,6 +50,7 @@
 </template>
 
 <script setup lang="ts">
+import { ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useTranscriptStore, type TranscriptItem } from '../store'
 
@@ -64,8 +66,33 @@ const store = useTranscriptStore()
 const { transcript, selectedIds } = storeToRefs(store)
 const { toggleSelect, setTranscript } = store
 
+// 當前高亮的字幕元素的 ref
+const currentItemRef = ref<HTMLElement | null>(null)
+
+// 監聽播放時間變化，自動滾動到當前播放的字幕
+watch(() => props.currentTime, (time) => {
+  // 找到當前時間對應的字幕
+  const currentItem = transcript.value.find(
+    item => time >= item.start && time <= item.end
+  )
+
+  // 如果找到對應字幕
+  if (currentItem) {
+    // 找到對應的 DOM 元素
+    const itemElement = document.querySelector(`[data-time="${currentItem.start}"]`)
+    if (itemElement) {
+      // 使用平滑滾動效果滾動到該元素
+      itemElement.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center'
+      })
+    }
+  }
+})
+
 // 格式化時間函數
 function formatTime(seconds: number): string {
+  if (!seconds) return '00:00'
   const hours = Math.floor(seconds / 3600)
   const minutes = Math.floor((seconds % 3600) / 60)
   const remainingSeconds = Math.floor(seconds % 60)

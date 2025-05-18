@@ -1,17 +1,29 @@
 <template>
-  <div class="flex h-screen">
-    <TranscriptEditor
-      ref="transcriptEditorRef"
-      class="w-1/2 border-r overflow-auto"
-      @seek="handleSeek"
-      :currentTime="currentTime"
-    />
-    <VideoPlayer
-      ref="videoPlayerRef"
-      class="w-1/2"
-      @timeupdate="handleTimeUpdate"
-      @fileSelected="handleFileSelected"
-    />
+  <div
+    class="lg:min-h-screen h-screen flex flex-col lg:flex-row-reverse"
+  >
+    <!-- 影片播放區塊 -->
+    <div
+      class="w-full lg:w-1/2 lg:h-screen lg:border-l"
+    >
+      <VideoPlayer
+        ref="videoPlayerRef"
+        class="sticky top-0 w-full"
+        @timeupdate="handleTimeUpdate"
+        @fileSelected="handleFileSelected"
+      />
+    </div>
+
+    <!-- 字幕區塊 -->
+    <div
+      class="w-full lg:w-1/2 lg:h-screen flex-1 border-t lg:border-t-0 overflow-auto"
+    >
+      <TranscriptEditor
+        ref="transcriptEditorRef"
+        @seek="handleSeek"
+        :currentTime="currentTime"
+      />
+    </div>
   </div>
 </template>
 
