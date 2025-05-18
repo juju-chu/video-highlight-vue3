@@ -32,8 +32,132 @@
         {{ currentOverlay.text }}
       </div>
     </div>
+
+    <!-- 控制列 -->
+    <div
+      v-if="videoRef"
+      class="flex flex-col gap-2"
+    >
+      <!-- 播放控制按鈕 -->
+      <div
+        class="flex items-center justify-center gap-4"
+      >
+        <button
+          class="p-2 text-white hover:text-[#3c82f6] transition-colors"
+          @click="seekTo(0)"
+        >
+          <svg
+            class="w-6 h-6"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M11 19l-7-7 7-7m8 14l-7-7 7-7"
+            />
+          </svg>
+        </button>
+        <button
+          class="p-2 text-white hover:text-[#3c82f6] transition-colors"
+          @click="togglePlay"
+        >
+          <svg
+            v-if="!isPlaying"
+            class="w-6 h-6"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"
+            />
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
+          </svg>
+          <svg
+            v-else
+            class="w-6 h-6"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
+          </svg>
+        </button>
+        <button
+          class="p-2 text-white hover:text-[#3c82f6] transition-colors"
+          @click="seekTo(videoRef.duration)"
+        >
+          <svg
+            class="w-6 h-6"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M13 5l7 7-7 7M5 5l7 7-7 7"
+            />
+          </svg>
+        </button>
+      </div>
+
+      <!-- 時間軸 -->
+      <div
+        class="relative"
+      >
+        <div
+          class="w-full h-4 bg-[#374151] rounded cursor-pointer"
+          @click="handleTimelineClick"
+        >
+          <!-- Highlight 片段 -->
+          <div
+            v-for="segment in highlightSegments"
+            :key="segment.id"
+            class="absolute h-full bg-[#3c82f6]"
+            :style="{
+              left: `${(segment.start / videoRef.duration) * 100}%`,
+              width: `${((segment.end - segment.start) / videoRef.duration) * 100}%`
+            }"
+          />
+          <!-- 當前時間指示器 -->
+          <div
+            class="absolute top-0 h-full w-0.5 bg-[#dd4c58]"
+            :style="{
+              left: `${(currentTime / videoRef.duration) * 100}%`
+            }"
+          />
+        </div>
+        <!-- 總時長顯示 -->
+        <div
+          class="absolute right-0 -top-6 text-white text-sm"
+        >
+          {{ formatTime(videoRef.duration) }}
+        </div>
+      </div>
+    </div>
+
     <!-- 上傳影片 -->
-    <div class="flex flex-col gap-2">
+    <div
+      class="flex flex-col gap-2"
+    >
       <input
         ref="fileInput"
         type="file"
@@ -47,7 +171,10 @@
       >
         選擇影片
       </button>
-      <div v-if="fileName" class="text-sm text-gray-300">
+      <div
+        v-if="fileName"
+        class="text-sm text-gray-300"
+      >
         已選擇檔案：{{ fileName }}
       </div>
     </div>
@@ -66,6 +193,7 @@ const videoUrl = ref<string>('')
 const fileName = ref<string>('')
 const videoKey = ref<number>(0) // 用來強制重新渲染 video 元素
 const currentTime = ref<number>(0)
+const isPlaying = ref<boolean>(false)
 
 const store = useTranscriptStore()
 const { transcript } = storeToRefs(store)
@@ -75,10 +203,45 @@ const highlightSegments = computed(() => {
   return transcript.value.filter(item => item.highlight)
 })
 
+// 格式化時間
+function formatTime(seconds: number): string {
+  if (!seconds) return '00:00'
+  const hours = Math.floor(seconds / 3600)
+  const minutes = Math.floor((seconds % 3600) / 60)
+  const remainingSeconds = Math.floor(seconds % 60)
+
+  const parts = []
+  if (hours > 0) {
+    parts.push(hours.toString().padStart(2, '0'))
+  }
+  parts.push(minutes.toString().padStart(2, '0'))
+  parts.push(remainingSeconds.toString().padStart(2, '0'))
+
+  return parts.join(':')
+}
+
+// 切換播放/暫停
+const togglePlay = () => {
+  if (!videoRef.value) return
+  
+  if (videoRef.value.paused) {
+    videoRef.value.play()
+    isPlaying.value = true
+  } else {
+    videoRef.value.pause()
+    isPlaying.value = false
+  }
+}
+
 // 跳轉到指定時間
 const seekTo = (time: number) => {
   if (videoRef.value) {
     videoRef.value.currentTime = time
+    if (time === videoRef.value.duration) {
+      videoRef.value.currentTime = highlightSegments.value[highlightSegments.value.length - 1].end
+      videoRef.value.pause()
+      isPlaying.value = false
+    }
     videoRef.value.play()
   }
 }
@@ -169,9 +332,11 @@ function handleHighlightSegmentJump(time: number) {
     
     if (nextSegment) {
       videoRef.value.currentTime = nextSegment.start
-    } else if (highlightSegments.value.length > 0) {
-      // 如果沒有下一個 highlight 片段，回到第一個 highlight 片段
-      videoRef.value.currentTime = highlightSegments.value[0].start
+    } else {
+      // 如果沒有下一個 highlight 片段，表示已經播放完最後一個片段
+      videoRef.value.currentTime = highlightSegments.value[highlightSegments.value.length - 1].end
+      videoRef.value.pause()
+      isPlaying.value = false
     }
   }
 }
@@ -198,6 +363,17 @@ watch(videoUrl, async (newUrl) => {
         handleHighlightSegmentJump(time)
       }
     })
+    
+    // 監聽播放狀態變化
+    videoRef.value.addEventListener('play', () => {
+      isPlaying.value = true
+    })
+    videoRef.value.addEventListener('pause', () => {
+      isPlaying.value = false
+    })
+    videoRef.value.addEventListener('ended', () => {
+      isPlaying.value = false
+    })
   }
 })
 
@@ -220,6 +396,18 @@ watch(transcript, () => {
     handleHighlightSegmentJump(videoRef.value.currentTime)
   }
 }, { deep: true })
+
+// 處理時間軸點擊
+function handleTimelineClick(event: MouseEvent) {
+  if (!videoRef.value) return
+  
+  const currentPosition = (event.currentTarget as HTMLElement).getBoundingClientRect()
+  const clickPosition = event.clientX
+  const percentage = (clickPosition - currentPosition.left) / currentPosition.width
+  const clickTime = percentage * videoRef.value.duration
+  
+  videoRef.value.currentTime = clickTime
+}
 </script>
 
 <style scoped>
