@@ -152,6 +152,30 @@ function updateSubtitle() {
   animationFrameId = requestAnimationFrame(updateSubtitle)
 }
 
+// 處理 highlight 片段的跳轉邏輯
+function handleHighlightSegmentJump(time: number) {
+  if (!videoRef.value) return
+
+  // 檢查當前時間是否在任何 highlight 片段內
+  const isInHighlight = highlightSegments.value.some(
+    (segment) => time >= segment.start && time <= segment.end
+  )
+  
+  // 如果不在 highlight 片段內，找下一個 highlight 片段
+  if (!isInHighlight) {
+    const nextSegment = highlightSegments.value.find(
+      (segment) => segment.start > time
+    )
+    
+    if (nextSegment) {
+      videoRef.value.currentTime = nextSegment.start
+    } else if (highlightSegments.value.length > 0) {
+      // 如果沒有下一個 highlight 片段，回到第一個 highlight 片段
+      videoRef.value.currentTime = highlightSegments.value[0].start
+    }
+  }
+}
+
 // 當影片路徑改變，開始追蹤播放進度
 watch(videoUrl, async (newUrl) => {
   if (!newUrl) return
@@ -171,25 +195,7 @@ watch(videoUrl, async (newUrl) => {
       if (videoRef.value) {
         const time = videoRef.value.currentTime
         currentTime.value = time
-        
-        // 檢查當前時間是否在任何 highlight 片段內
-        const isInHighlight = highlightSegments.value.some(
-          (segment) => time >= segment.start && time <= segment.end
-        )
-        
-        // 如果不在 highlight 片段內，找下一個 highlight 片段
-        if (!isInHighlight) {
-          const nextSegment = highlightSegments.value.find(
-            (segment) => segment.start > time
-          )
-          
-          if (nextSegment) {
-            videoRef.value.currentTime = nextSegment.start
-          } else {
-            // 如果沒有下一個 highlight 片段，跳到影片結尾
-            videoRef.value.currentTime = videoRef.value.duration
-          }
-        }
+        handleHighlightSegmentJump(time)
       }
     })
   }
@@ -211,22 +217,7 @@ onUnmounted(() => {
 watch(transcript, () => {
   // 當 transcript 更新時，重新檢查當前時間是否在 highlight 片段內
   if (videoRef.value) {
-    const time = videoRef.value.currentTime
-    const isInHighlight = highlightSegments.value.some(
-      (segment) => time >= segment.start && time <= segment.end
-    )
-    
-    if (!isInHighlight) {
-      const nextSegment = highlightSegments.value.find(
-        (segment) => segment.start > time
-      )
-      
-      if (nextSegment) {
-        videoRef.value.currentTime = nextSegment.start
-      } else {
-        videoRef.value.currentTime = videoRef.value.duration
-      }
-    }
+    handleHighlightSegmentJump(videoRef.value.currentTime)
   }
 }, { deep: true })
 </script>
