@@ -15,7 +15,8 @@
         ref="videoRef"
         :key="videoKey"
         :src="videoUrl"
-        class="w-full h-full"
+        class="w-full h-full transition-opacity duration-300"
+        :style="{ opacity: videoOpacity }"
         @error="onVideoError"
       />
 
@@ -189,6 +190,7 @@ const fileName = ref<string>('')
 const videoKey = ref<number>(0) // 用來強制重新渲染 video 元素
 const currentTime = ref<number>(0)
 const isPlaying = ref<boolean>(false)
+const videoOpacity = ref<number>(1) // 控制影片透明度，1 表示完全不透明，0 表示完全透明
 
 const store = useTranscriptStore()
 const { transcript } = storeToRefs(store)
@@ -252,9 +254,74 @@ defineOptions({
 
 const emit = defineEmits(['timeupdate', 'fileSelected'])
 
+// 計算影片透明度
+function calculateVideoOpacity(currentTime: number, segments: { start: number; end: number }[]): number {
+  const threshold = 0.5 // 臨界值為 0.5 秒
+  const minOpacity = 0.5 // 最小透明度
+  const maxOpacity = 1 // 最大透明度
+
+  // 如果沒有片段，直接返回最大透明度
+  if (segments.length === 0) return maxOpacity
+
+  // 計算距離臨界點最近的距離
+  let minDistance = Infinity
+  
+  segments.forEach((segment, index) => {
+    // 如果是第一個片段，只檢查結束時間
+    if (index === 0) {
+      const distanceToEnd = Math.abs(currentTime - segment.end)
+      // 檢查是否與下一個片段連續
+      const nextSegment = segments[index + 1]
+      const isConnectedToNext = nextSegment && nextSegment.start - segment.end <= 1
+      if (!isConnectedToNext) {
+        minDistance = Math.min(minDistance, distanceToEnd)
+      }
+    }
+    // 如果是最後一個片段，只檢查開始時間
+    else if (index === segments.length - 1) {
+      const distanceToStart = Math.abs(currentTime - segment.start)
+      // 檢查是否與前一個片段連續
+      const prevSegment = segments[index - 1]
+      const isConnectedToPrev = prevSegment && segment.start - prevSegment.end <= 1
+      if (!isConnectedToPrev) {
+        minDistance = Math.min(minDistance, distanceToStart)
+      }
+    }
+    // 中間片段
+    else {
+      const distanceToStart = Math.abs(currentTime - segment.start)
+      const distanceToEnd = Math.abs(currentTime - segment.end)
+      
+      // 檢查與前後片段的連續性
+      const prevSegment = segments[index - 1]
+      const nextSegment = segments[index + 1]
+      const isConnectedToPrev = prevSegment && segment.start - prevSegment.end <= 1
+      const isConnectedToNext = nextSegment && nextSegment.start - segment.end <= 1
+
+      // 只有在非連續的情況下才考慮透明度
+      if (!isConnectedToPrev) {
+        minDistance = Math.min(minDistance, distanceToStart)
+      }
+      if (!isConnectedToNext) {
+        minDistance = Math.min(minDistance, distanceToEnd)
+      }
+    }
+  })
+
+  // 計算透明度
+  if (minDistance > threshold) {
+    return maxOpacity
+  } else {
+    // 使用線性插值計算透明度
+    const progress = minDistance / threshold
+    return minOpacity + (maxOpacity - minOpacity) * progress
+  }
+}
+
 // 監聽 currentTime 的變化
 watch(currentTime, (newTime) => {
   emit('timeupdate', newTime)
+  videoOpacity.value = calculateVideoOpacity(newTime, highlightSegments.value)
 })
 
 defineExpose({
