@@ -1,15 +1,15 @@
 <template>
   <div
-    class="flex flex-col gap-4 h-full bg-gray-800 p-4 text-white"
+    class="flex flex-col gap-4 h-full bg-gray-800 p-4 text-white w-full"
   >
     <h2
       class="text-xl font-bold mb-4 p-2 rounded w-full"
     >
       Preview
     </h2>
-    <!-- 影片與字幕區塊 -->
+    <!-- 影片容器 -->
     <div
-      class="relative aspect-video bg-black mb-2 sm:mb-4 rounded overflow-hidden"
+      class="video-container relative aspect-video bg-black mb-2 sm:mb-4 rounded overflow-hidden"
     >
       <video
         ref="videoRef"
@@ -118,30 +118,31 @@
       </div>
 
       <!-- 時間軸 -->
-      <div
-        class="relative"
-      >
-        <div
-          class="w-full h-4 bg-[#374151] rounded cursor-pointer"
-          @click="handleTimelineClick"
-        >
-          <!-- Highlight 片段 -->
+      <div class="video-container">
+        <div class="relative w-full">
+          <!-- 時間軸軌道 -->
           <div
-            v-for="segment in highlightSegments"
-            :key="segment.id"
-            class="absolute h-full bg-[#3c82f6]"
-            :style="{
-              left: `${(segment.start / videoRef.duration) * 100}%`,
-              width: `${((segment.end - segment.start) / videoRef.duration) * 100}%`
-            }"
-          />
-          <!-- 當前時間指示器 -->
-          <div
-            class="absolute top-0 h-full w-0.5 bg-[#dd4c58]"
-            :style="{
-              left: `${(currentTime / videoRef.duration) * 100}%`
-            }"
-          />
+            class="w-full h-4 bg-[#374151] rounded cursor-pointer relative"
+            @click="handleTimelineClick"
+          >
+            <!-- Highlight 片段 -->
+            <div
+              v-for="segment in highlightSegments"
+              :key="segment.id"
+              class="absolute inset-y-0 bg-[#3c82f6]"
+              :style="{
+                left: `${(segment.start / videoRef.duration) * 100}%`,
+                width: `${((segment.end - segment.start) / videoRef.duration) * 100}%`
+              }"
+            />
+            <!-- 當前時間指示器 -->
+            <div
+              class="absolute inset-y-0 w-0.5 bg-[#dd4c58]"
+              :style="{
+                left: `${(currentTime / videoRef.duration) * 100}%`
+              }"
+            />
+          </div>
         </div>
         <!-- 總時長顯示 -->
         <div
@@ -482,5 +483,9 @@ function handleTimelineClick(event: MouseEvent) {
 <style scoped>
 video {
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+}
+.video-container {
+  width: 100%;
+  max-width: calc(100vw - 32px);
 }
 </style>
