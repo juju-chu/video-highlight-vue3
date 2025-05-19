@@ -177,7 +177,7 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, watch, nextTick, onMounted, onUnmounted, defineOptions, computed } from 'vue'
+import { ref, watch, nextTick, onUnmounted, defineOptions, computed } from 'vue'
 import { useTranscriptStore } from '../store'
 import { storeToRefs } from 'pinia'
 

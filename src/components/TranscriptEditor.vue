@@ -50,7 +50,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useTranscriptStore, type TranscriptItem } from '../store'
 
@@ -63,11 +63,8 @@ const emit = defineEmits<{
 }>()
 
 const store = useTranscriptStore()
-const { transcript, selectedIds } = storeToRefs(store)
-const { toggleSelect, setTranscript } = store
-
-// 當前高亮的字幕元素的 ref
-const currentItemRef = ref<HTMLElement | null>(null)
+const { transcript } = storeToRefs(store)
+const { setTranscript } = store
 
 // 監聽播放時間變化，自動滾動到當前播放的字幕
 watch(() => props.currentTime, (time) => {
