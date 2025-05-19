@@ -1,27 +1,31 @@
 [
   {
     "id": 1,
+    "title": "介紹",
     "start": 0,
-    "end": 3,
+    "end": 3.5,
     "text": "嗨，這是一個demo影片",
     "highlight": false
   },
   {
     "id": 2,
-    "start": 4,
-    "end": 5,
+    "title": "有島嶼的海",
+    "start": 3.5,
+    "end": 5.5,
     "text": "你現在看到的是",
     "highlight": false
   },
   {
     "id": 3,
-    "start": 6,
+    "title": "有島嶼的海",
+    "start": 5.5,
     "end": 9,
     "text": "一個海上面有很多島嶼",
     "highlight": true
   },
   {
     "id": 4,
+    "title": "就是海",
     "start": 9,
     "end": 12,
     "text": "然後再來也是一片海",
@@ -29,6 +33,7 @@
   },
   {
     "id": 5,
+    "title": "湖有很多山",
     "start": 12,
     "end": 16,
     "text": "然後還會看到一個湖有很多山",
@@ -36,20 +41,23 @@
   },
   {
     "id": 6,
+    "title": "海洋",
     "start": 16,
-    "end": 18,
+    "end": 18.5,
     "text": "然後接著呢會看到海洋",
     "highlight": false
   },
   {
     "id": 7,
-    "start": 19,
+    "title": "海洋",
+    "start": 18.5,
     "end": 22,
     "text": "海洋看起來很漂亮",
     "highlight": true
   },
   {
     "id": 8,
+    "title": "港口",
     "start": 22,
     "end": 27,
     "text": "然後再來下一個畫面看起來是一個港口",
@@ -57,6 +65,7 @@
   },
   {
     "id": 9,
+    "title": "港口",
     "start": 27,
     "end": 29.5,
     "text": "有一些船隻停在港口",
@@ -64,7 +73,8 @@
   },
   {
     "id": 10,
-    "start": 30,
+    "title": "結束",
+    "start": 29.5,
     "end": 32,
     "text": "demo結束",
     "highlight": false
