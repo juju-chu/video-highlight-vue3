@@ -18,6 +18,8 @@
         class="w-full h-full transition-opacity duration-300"
         :style="{ opacity: videoOpacity }"
         @error="onVideoError"
+        playsinline
+        webkit-playsinline
       />
 
       <!-- 字幕顯示 -->
