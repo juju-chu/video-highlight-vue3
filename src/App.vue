@@ -30,7 +30,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import TranscriptEditor from './components/TranscriptEditor.vue'
-import HighlightPreview from './components/HighlightPreview.vue'
 import VideoPlayer from './components/VideoPlayer.vue'
 
 const videoPlayerRef = ref<InstanceType<typeof VideoPlayer> | null>(null)
