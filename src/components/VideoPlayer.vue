@@ -426,12 +426,19 @@ watch(videoUrl, async (newUrl) => {
     })
     
     // 監聽時間更新
-    videoRef.value.addEventListener('timeupdate', () => {
+    function updateTime() {
       if (videoRef.value) {
         const time = videoRef.value.currentTime
         currentTime.value = time
         handleHighlightSegmentJump(time)
       }
+      if (isPlaying.value) {
+        requestAnimationFrame(updateTime)
+      }
+    }
+
+    videoRef.value.addEventListener('play', () => {
+      requestAnimationFrame(updateTime)
     })
     
     // 監聽播放狀態變化
