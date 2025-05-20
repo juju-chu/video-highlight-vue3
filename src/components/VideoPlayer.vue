@@ -260,7 +260,7 @@ const emit = defineEmits(['timeupdate', 'fileSelected'])
 // 計算影片透明度
 function calculateVideoOpacity(currentTime: number, segments: { start: number; end: number }[]): number {
   const threshold = 0.5 // 臨界值為 0.5 秒
-  const minOpacity = 0.5 // 最小透明度
+  const minOpacity = 0 // 最小透明度
   const maxOpacity = 1 // 最大透明度
 
   // 如果沒有片段，直接返回最大透明度
@@ -387,21 +387,30 @@ function updateSubtitle() {
 
 // 處理 highlight 片段的跳轉邏輯
 function handleHighlightSegmentJump(time: number) {
-  if (!videoRef.value) return
+  if (!videoRef.value || !highlightSegments.value.length) return
 
   // 檢查當前時間是否在任何 highlight 片段內
   const isInHighlight = highlightSegments.value.some(
     (segment) => time >= segment.start && time <= segment.end
   )
   
-  // 如果不在 highlight 片段內，找下一個 highlight 片段
+  // 如果不在 highlight 片段內
   if (!isInHighlight) {
+    // 暫停播放
+    videoRef.value.pause()
+    isPlaying.value = false
+
+    // 找下一個 highlight 片段
     const nextSegment = highlightSegments.value.find(
       (segment) => segment.start > time
     )
     
     if (nextSegment) {
+      // 跳轉到下一個片段的開始
       videoRef.value.currentTime = nextSegment.start
+      // 繼續播放
+      videoRef.value.play()
+      isPlaying.value = true
     } else {
       // 如果沒有下一個 highlight 片段，表示已經播放完最後一個片段
       videoRef.value.currentTime = highlightSegments.value[highlightSegments.value.length - 1].end
@@ -430,16 +439,15 @@ watch(videoUrl, async (newUrl) => {
       if (videoRef.value) {
         const time = videoRef.value.currentTime
         currentTime.value = time
-        handleHighlightSegmentJump(time)
-      }
-      if (isPlaying.value) {
-        requestAnimationFrame(updateTime)
+        // 只在播放中才檢查跳轉
+        if (isPlaying.value) {
+          handleHighlightSegmentJump(time)
+        }
       }
     }
 
-    videoRef.value.addEventListener('play', () => {
-      requestAnimationFrame(updateTime)
-    })
+    // 使用 timeupdate 事件更新時間
+    videoRef.value.addEventListener('timeupdate', updateTime)
     
     // 監聽播放狀態變化
     videoRef.value.addEventListener('play', () => {
